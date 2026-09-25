@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Theft Guard</string>
+
+    <string name="instructions">If your phone is stolen, send it an SMS containing exactly:\n\n    %1$s\n\nfrom any phone. The phone will then announce \"This phone is stolen\" with a siren at full volume. Nobody can turn the volume down; the alarm stops only when the phone is unlocked with your PIN, pattern, password or fingerprint.</string>
+    <string name="armed">Protection enabled</string>
+    <string name="setup_header">Setup checklist</string>
+    <string name="recommended">(recommended)</string>
+    <string name="fix">Fix</string>
+    <string name="done">Done</string>
+
+    <string name="item_lock_title">Secure screen lock</string>
+    <string name="item_lock_detail">The alarm stops when the phone is unlocked, so the phone must have a PIN, pattern or password. Otherwise anyone can stop it.</string>
+    <string name="item_sms_title">SMS and notification permission</string>
+    <string name="item_sms_detail">Needed to detect the \"Stolen\" message and show the alarm.</string>
+    <string name="item_fullscreen_title">Full-screen alarm</string>
+    <string name="item_fullscreen_detail">Lets the alarm screen appear over the lock screen.</string>
+    <string name="item_battery_title">Ignore battery optimisation</string>
+    <string name="item_battery_detail">Stops the system from delaying or killing the alarm.</string>
+    <string name="item_admin_title">Lock screen on alarm</string>
+    <string name="item_admin_detail">Locks the phone the moment the alarm starts, so even a thief who has the phone open must know your PIN to stop it.</string>
+    <string name="item_volume_keys_title">Block volume buttons</string>
+    <string name="item_volume_keys_detail">Enable \"Theft Guard volume lock\" in Accessibility settings. The volume buttons then do nothing while the alarm sounds. (Even without this, the volume is forced back to maximum instantly.)</string>
+    <string name="item_dnd_title">Override Do Not Disturb</string>
+    <string name="item_dnd_detail">Allows the app to switch off Do Not Disturb while the alarm sounds.</string>
+
+    <string name="admin_explanation">Theft Guard locks the screen when the \"Stolen\" alarm is triggered, so only you can unlock the phone and stop the alarm.</string>
+    <string name="accessibility_label">Theft Guard volume lock</string>
+    <string name="accessibility_description">Blocks the volume buttons only while the theft alarm is sounding, so a thief cannot turn it down. It does not read or collect any content.</string>
+
+    <string name="test_button">Test alarm</string>
+    <string name="test_title">Test the alarm?</string>
+    <string name="test_message">The alarm will sound at full volume. It stops only when the phone is unlocked. If \"Lock screen on alarm\" is enabled the phone locks immediately; otherwise lock the phone with the power button and unlock it again to stop the alarm.</string>
+    <string name="test_start">Start test</string>
+
+    <string name="channel_name">Theft alarm</string>
+    <string name="channel_description">Shown while the theft alarm is sounding</string>
+    <string name="alarm_title">THIS PHONE IS STOLEN</string>
+    <string name="alarm_subtitle">The alarm stops only when the owner unlocks this phone.</string>
+    <string name="alarm_return">If you found this phone, please hand it in to the police.</string>
+    <string name="spoken_warning">Warning! This phone is stolen! This phone is stolen!</string>
+</resources>
