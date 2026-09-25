@@ -6,7 +6,8 @@ An Android anti-theft app. When the phone receives an SMS whose text is exactly
 Stolen
 ```
 
-it announces **"This phone is stolen!"** with a siren, at full volume, over and over.
+it announces **"This phone is stolen!"** with a siren, at full volume, over and over,
+and texts the phone's **GPS location** to your trusted numbers.
 Nobody can turn the volume down. The alarm stops only when someone unlocks the phone
 with the owner's PIN, pattern, password or fingerprint.
 
@@ -22,6 +23,7 @@ with the owner's PIN, pattern, password or fingerprint.
 | Stops only when unlocked | The alarm listens for `ACTION_USER_PRESENT`, which Android sends when the lock screen is dismissed. The alarm screen has no stop button. The back button is ignored. |
 | Thief has the phone unlocked | With the optional **device admin** enabled, the phone locks itself (`lockNow()`) as soon as the alarm starts. |
 | Thief reboots the phone | The alarm state is stored in device-protected storage. The alarm restarts on `LOCKED_BOOT_COMPLETED`, before the PIN is entered. The first PIN unlock after boot (`BOOT_COMPLETED`) cancels it. |
+| GPS location by SMS | `LocationReporter` texts a Google Maps link, accuracy, time and battery level to the **trusted numbers** saved in the app. It sends the last known position right away, then a fresh fix, then an update every 5 minutes while the alarm sounds, and a final "unlocked, alarm stopped" message. It uses plain SMS, so it works without mobile data. Only the trusted numbers get the location, whoever sends "Stolen", so the keyword can't be used to track you. |
 | Do Not Disturb | Alarm-stream audio normally bypasses Do Not Disturb. If the app has DND access, it also switches DND off for the duration and then restores it. |
 
 When the alarm stops, the original volume levels and DND mode are restored.
@@ -32,12 +34,13 @@ Open **Theft Guard** and complete the checklist:
 
 1. **Secure screen lock** (required). Without a PIN or pattern, anyone can "unlock" the phone and stop the alarm.
 2. **SMS and notification permission** (required).
-3. **Full-screen alarm** (required, Android 14+).
-4. **Ignore battery optimisation** (required). This stops Android from delaying the alarm.
-5. **Lock screen on alarm** (recommended). This is the device admin.
-6. **Block volume buttons** (recommended). Turn on *Theft Guard volume lock* in Accessibility settings.
-   On Android 13+, a sideloaded APK may first need *App info → ⋮ → Allow restricted settings*.
-7. **Override Do Not Disturb** (recommended).
+3. **Trusted numbers**, **Location permission** (choose *Allow all the time*) and **Location turned on** (required for the GPS SMS).
+4. **Full-screen alarm** (required, Android 14+).
+5. **Ignore battery optimisation** (required). This stops Android from delaying the alarm.
+6. **Lock screen on alarm** (recommended). This is the device admin.
+7. **Block volume buttons** (recommended). Turn on *Theft Guard volume lock* in Accessibility settings.
+   On Android 13+, a sideloaded APK must first get *App info → ⋮ → Allow restricted settings*. This also applies to the SMS permission.
+8. **Override Do Not Disturb** (recommended).
 
 Use **Test alarm** to try it. To stop the test, unlock the phone. If device admin is off, press the power button to lock the phone, then unlock it.
 
@@ -54,5 +57,6 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 ## Limitations
 
 - A thief can still power the phone off, or remove the SIM before the SMS arrives. The alarm comes back if the phone is powered on again before being unlocked.
+- Android doesn't let normal apps switch **mobile data** or **location** on, so the location SMS needs location to be on already.
 - Some manufacturers (e.g. Xiaomi, Huawei, Oppo) add their own "autostart" or battery restrictions. Allow autostart for Theft Guard on those phones.
 - Google Play restricts apps that use `RECEIVE_SMS` and accessibility services. The app is meant to be sideloaded for personal use.

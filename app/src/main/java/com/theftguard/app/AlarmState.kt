@@ -17,6 +17,7 @@ object AlarmState {
     private const val PREFS = "theft_guard"
     private const val KEY_ARMED = "armed"
     private const val KEY_ACTIVE = "alarm_active"
+    private const val KEY_TRUSTED = "trusted_numbers"
 
     /** In-memory mirror of [KEY_ACTIVE] for hot paths such as key events. */
     @Volatile
@@ -32,6 +33,17 @@ object AlarmState {
 
     fun setArmed(context: Context, armed: Boolean) {
         prefs(context).edit().putBoolean(KEY_ARMED, armed).apply()
+    }
+
+    /** Phone numbers that receive the location SMS while the alarm is sounding. */
+    fun trustedNumbers(context: Context): List<String> =
+        prefs(context).getString(KEY_TRUSTED, "").orEmpty()
+            .split(',', ';', '\n')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
+    fun setTrustedNumbers(context: Context, numbers: String) {
+        prefs(context).edit().putString(KEY_TRUSTED, numbers.trim()).apply()
     }
 
     fun isActive(context: Context): Boolean =

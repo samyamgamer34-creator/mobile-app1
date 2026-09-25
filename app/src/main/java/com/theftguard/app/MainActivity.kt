@@ -10,6 +10,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -17,15 +18,18 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
+import android.widget.Toast
 
 /** Setup screen: grants the permissions the alarm needs and arms/disarms protection. */
 class MainActivity : Activity() {
 
     private lateinit var armedSwitch: Switch
     private lateinit var checklist: LinearLayout
+    private lateinit var trustedNumbers: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +42,14 @@ class MainActivity : Activity() {
         armedSwitch.setOnCheckedChangeListener { _, checked -> AlarmState.setArmed(this, checked) }
 
         checklist = findViewById(R.id.checklist)
+
+        trustedNumbers = findViewById(R.id.trusted_numbers)
+        trustedNumbers.setText(AlarmState.trustedNumbers(this).joinToString(", "))
+        findViewById<Button>(R.id.trusted_save).setOnClickListener {
+            AlarmState.setTrustedNumbers(this, trustedNumbers.text.toString())
+            Toast.makeText(this, R.string.trusted_saved, Toast.LENGTH_SHORT).show()
+            renderChecklist()
+        }
 
         findViewById<Button>(R.id.test_button).setOnClickListener { confirmTest() }
     }
@@ -64,6 +76,46 @@ class MainActivity : Activity() {
             done = missingRuntimePermissions().isEmpty(),
             required = true,
         ) { requestPermissions(missingRuntimePermissions().toTypedArray(), REQUEST_PERMISSIONS) }
+
+        addItem(
+            title = getString(R.string.item_trusted_title),
+            detail = getString(R.string.item_trusted_detail),
+            done = AlarmState.trustedNumbers(this).isNotEmpty(),
+            required = true,
+        ) { trustedNumbers.requestFocus() }
+
+        addItem(
+            title = getString(R.string.item_location_title),
+            detail = getString(R.string.item_location_detail),
+            done = hasForegroundLocation(),
+            required = true,
+        ) { requestForegroundLocation() }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            addItem(
+                title = getString(R.string.item_bg_location_title),
+                detail = getString(R.string.item_bg_location_detail),
+                done = checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED,
+                required = true,
+            ) {
+                // Android only offers "Allow all the time" after the normal location permission is granted.
+                if (hasForegroundLocation()) {
+                    requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), REQUEST_PERMISSIONS)
+                } else {
+                    requestForegroundLocation()
+                }
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            addItem(
+                title = getString(R.string.item_location_on_title),
+                detail = getString(R.string.item_location_on_detail),
+                done = (getSystemService(LOCATION_SERVICE) as LocationManager).isLocationEnabled,
+                required = true,
+            ) { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -138,9 +190,19 @@ class MainActivity : Activity() {
     }
 
     private fun missingRuntimePermissions(): List<String> {
-        val needed = mutableListOf(Manifest.permission.RECEIVE_SMS)
+        val needed = mutableListOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) needed += Manifest.permission.POST_NOTIFICATIONS
         return needed.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+    }
+
+    private fun hasForegroundLocation() =
+        checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    private fun requestForegroundLocation() {
+        requestPermissions(
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            REQUEST_PERMISSIONS
+        )
     }
 
     private fun isVolumeLockServiceEnabled(): Boolean {

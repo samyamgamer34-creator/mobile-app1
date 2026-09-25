@@ -4,6 +4,12 @@
     <!-- Trigger: listen for the "Stolen" SMS -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
 
+    <!-- Text the phone's location to the owner's trusted numbers -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
     <!-- Alarm service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />

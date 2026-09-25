@@ -28,6 +28,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:text="@string/trusted_header"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trusted_explanation"
+            android:textSize="13sp" />
+
+        <EditText
+            android:id="@+id/trusted_numbers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/trusted_hint"
+            android:importantForAutofill="no"
+            android:inputType="phone" />
+
+        <Button
+            android:id="@+id/trusted_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/trusted_save" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="@string/setup_header"
             android:textSize="18sp"
             android:textStyle="bold" />

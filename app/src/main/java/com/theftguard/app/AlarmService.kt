@@ -47,6 +47,7 @@ class AlarmService : Service() {
     private var running = false
     private var soundThread: Thread? = null
     private var tts: TextToSpeech? = null
+    private var locationReporter: LocationReporter? = null
 
     @Volatile
     private var ttsReady = false
@@ -95,6 +96,7 @@ class AlarmService : Service() {
         startVolumeEnforcement()
         registerUnlockReceiver()
         initTextToSpeech()
+        locationReporter = LocationReporter(this).apply { start() }
 
         soundThread = Thread(::soundLoop, "theft-alarm-sound").apply { start() }
     }
@@ -103,6 +105,7 @@ class AlarmService : Service() {
     private fun stopAlarm() {
         Log.i(TAG, "Phone unlocked, stopping theft alarm")
         AlarmState.setActive(this, false)
+        locationReporter?.sendStopped()
         sendBroadcast(Intent(ACTION_ALARM_STOPPED).setPackage(packageName))
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -113,6 +116,8 @@ class AlarmService : Service() {
         running = false
 
         mainHandler.removeCallbacksAndMessages(null)
+        locationReporter?.stop()
+        locationReporter = null
         runCatching { contentResolver.unregisterContentObserver(volumeObserver) }
         runCatching { unregisterReceiver(unlockReceiver) }
 

@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Theft Guard</string>
 
-    <string name="instructions">If your phone is stolen, send it an SMS containing exactly:\n\n    %1$s\n\nfrom any phone. The phone will then announce \"This phone is stolen\" with a siren at full volume. Nobody can turn the volume down; the alarm stops only when the phone is unlocked with your PIN, pattern, password or fingerprint.</string>
+    <string name="instructions">If your phone is stolen, send it an SMS containing exactly:\n\n    %1$s\n\nfrom any phone. The phone will then announce \"This phone is stolen\" with a siren at full volume and text its GPS location to your trusted numbers. Nobody can turn the volume down; the alarm stops only when the phone is unlocked with your PIN, pattern, password or fingerprint.</string>
     <string name="armed">Protection enabled</string>
     <string name="setup_header">Setup checklist</string>
     <string name="recommended">(recommended)</string>
@@ -12,7 +12,7 @@
     <string name="item_lock_title">Secure screen lock</string>
     <string name="item_lock_detail">The alarm stops when the phone is unlocked, so the phone must have a PIN, pattern or password. Otherwise anyone can stop it.</string>
     <string name="item_sms_title">SMS and notification permission</string>
-    <string name="item_sms_detail">Needed to detect the \"Stolen\" message and show the alarm.</string>
+    <string name="item_sms_detail">Needed to detect the \"Stolen\" message, text the location and show the alarm.</string>
     <string name="item_fullscreen_title">Full-screen alarm</string>
     <string name="item_fullscreen_detail">Lets the alarm screen appear over the lock screen.</string>
     <string name="item_battery_title">Ignore battery optimisation</string>
@@ -23,6 +23,27 @@
     <string name="item_volume_keys_detail">Enable \"Theft Guard volume lock\" in Accessibility settings. The volume buttons then do nothing while the alarm sounds. (Even without this, the volume is forced back to maximum instantly.)</string>
     <string name="item_dnd_title">Override Do Not Disturb</string>
     <string name="item_dnd_detail">Allows the app to switch off Do Not Disturb while the alarm sounds.</string>
+
+    <string name="trusted_header">Trusted numbers (get the GPS location by SMS)</string>
+    <string name="trusted_hint">e.g. +15551234567, +447700900123</string>
+    <string name="trusted_explanation">While the alarm is sounding, the phone texts its location (a Google Maps link) to these numbers, straight away and then every 5 minutes, and texts again when it is unlocked. Only these numbers get the location, whoever sends \"Stolen\". Separate numbers with commas.</string>
+    <string name="trusted_save">Save numbers</string>
+    <string name="trusted_saved">Saved</string>
+
+    <string name="item_trusted_title">Trusted numbers for location SMS</string>
+    <string name="item_trusted_detail">Enter at least one number below (e.g. your other phone or a family member).</string>
+    <string name="item_location_title">Location permission</string>
+    <string name="item_location_detail">Needed to find the phone\'s GPS position.</string>
+    <string name="item_bg_location_title">Location \"Allow all the time\"</string>
+    <string name="item_bg_location_detail">The location is sent while the phone is locked, so choose \"Allow all the time\" in the location permission.</string>
+    <string name="item_location_on_title">Location turned on</string>
+    <string name="item_location_on_detail">Apps can\'t switch location on by themselves, so keep it on.</string>
+
+    <string name="sms_location">THEFT GUARD: phone location\nhttps://maps.google.com/?q=%1$.6f,%2$.6f\nAccuracy: %3$d m\nTime: %4$s\nBattery: %5$d%%</string>
+    <string name="sms_location_last_known">THEFT GUARD: last known location (getting a fresh fix)\nhttps://maps.google.com/?q=%1$.6f,%2$.6f\nAccuracy: %3$d m\nTime: %4$s\nBattery: %5$d%%</string>
+    <string name="sms_location_off">THEFT GUARD: alarm is ON but location is turned off on the phone. Battery: %1$d%%</string>
+    <string name="sms_no_permission">THEFT GUARD: alarm is ON but the app has no location permission. Battery: %1$d%%</string>
+    <string name="sms_stopped">THEFT GUARD: phone was unlocked at %1$s, alarm stopped. Battery: %2$d%%</string>
 
     <string name="admin_explanation">Theft Guard locks the screen when the \"Stolen\" alarm is triggered, so only you can unlock the phone and stop the alarm.</string>
     <string name="accessibility_label">Theft Guard volume lock</string>
