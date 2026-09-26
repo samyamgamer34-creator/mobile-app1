@@ -67,10 +67,18 @@
             android:orientation="vertical" />
 
         <Button
-            android:id="@+id/test_button"
+            android:id="@+id/setup_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:text="@string/setup_button"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/test_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:text="@string/test_button" />
     </LinearLayout>
 </ScrollView>

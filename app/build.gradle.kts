@@ -15,9 +15,25 @@ android {
         versionName = "1.0"
     }
 
+    // Fixed signing key so every build (local or CI) is signed the same way and
+    // updates install over the previous version without an uninstall. This key is
+    // only for a personal, sideloaded app; it is not a Play Store upload key.
+    signingConfigs {
+        create("shared") {
+            storeFile = rootProject.file("theftguard.keystore")
+            storePassword = "theftguard"
+            keyAlias = "theftguard"
+            keyPassword = "theftguard"
+        }
+    }
+
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("shared")
+        }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("shared")
         }
     }
 

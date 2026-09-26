@@ -49,6 +49,12 @@
     <string name="accessibility_label">Theft Guard volume lock</string>
     <string name="accessibility_description">Blocks the volume buttons only while the theft alarm is sounding, so a thief cannot turn it down. It does not read or collect any content.</string>
 
+    <string name="setup_button">Start guided setup</string>
+    <string name="wizard_next">Next</string>
+    <string name="wizard_stop">Stop</string>
+    <string name="wizard_need_numbers">First enter at least one trusted phone number above and tap \"Save numbers\", then start the guided setup.</string>
+    <string name="wizard_done_title">Setup complete</string>
+    <string name="wizard_done_message">All required permissions are granted. Send the phone an SMS saying \"Stolen\" to trigger the alarm, or use \"Test alarm\" below.\n\nOn Android 13+, if the SMS permission was greyed out, open App info \u2192 \u22ee \u2192 Allow restricted settings first, then run guided setup again.</string>
     <string name="test_button">Test alarm</string>
     <string name="test_title">Test the alarm?</string>
     <string name="test_message">The alarm will sound at full volume. It stops only when the phone is unlocked. If \"Lock screen on alarm\" is enabled the phone locks immediately; otherwise lock the phone with the power button and unlock it again to stop the alarm.</string>
