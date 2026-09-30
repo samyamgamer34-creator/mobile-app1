@@ -44,6 +44,35 @@ Open **Theft Guard** and complete the checklist:
 
 Use **Test alarm** to try it. To stop the test, unlock the phone. If device admin is off, press the power button to lock the phone, then unlock it.
 
+## Fast setup over USB (for tech users)
+
+If you have USB debugging, you can grant every permission in one command instead
+of tapping through Settings - including the "Allow restricted settings" gate and
+the "Allow all the time" location prompt.
+
+1. On the phone: **Settings → About phone**, tap **Build number** 7 times, then
+   **Settings → Developer options → USB debugging** (on).
+2. Install the app, connect USB, accept the "Allow USB debugging?" prompt.
+3. Run [`tools/adb-setup.sh`](tools/adb-setup.sh) (macOS/Linux) or
+   [`tools/adb-setup.bat`](tools/adb-setup.bat) (Windows). It needs Android
+   `platform-tools` (`adb`) installed.
+
+You still set a screen lock yourself and keep Location turned on.
+
+### What USB / ADB can and can't do
+
+- **Can**: grant SMS, location (including background "all the time"), notifications,
+  full-screen alarm, battery-optimisation exemption, device admin and the volume-lock
+  service - the ADB shell is allowed to grant these, which is why the script skips the
+  manual Settings hunt and the restricted-settings gate.
+- **Can (one-off)**: turn mobile data on *at that moment* with
+  `adb shell svc data enable` - useful for testing, but it's a manual command from a
+  computer, not something that happens automatically when the phone is stolen.
+- **Can't**: let the **app itself** turn mobile data on when the "Stolen" SMS arrives.
+  That needs `MODIFY_PHONE_STATE`, a privileged/signature permission that `adb pm grant`
+  cannot give a normal app - only the phone maker or carrier can. So the location SMS
+  still goes over plain text (no data needed), and mobile data stays a manual toggle.
+
 ## Build
 
 Requirements: Android Studio (or the Android SDK with platform 35) and JDK 17+.
