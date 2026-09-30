@@ -59,6 +59,19 @@ class MainActivity : Activity() {
 
         findViewById<Button>(R.id.setup_button).setOnClickListener { startGuidedSetup() }
         findViewById<Button>(R.id.test_button).setOnClickListener { confirmTest() }
+
+        // Refresh the checklist once the user answers Shizuku's permission prompt.
+        runCatching {
+            rikka.shizuku.Shizuku.addRequestPermissionResultListener(shizukuListener)
+        }
+    }
+
+    private val shizukuListener =
+        rikka.shizuku.Shizuku.OnRequestPermissionResultListener { _, _ -> renderChecklist() }
+
+    override fun onDestroy() {
+        runCatching { rikka.shizuku.Shizuku.removeRequestPermissionResultListener(shizukuListener) }
+        super.onDestroy()
     }
 
     override fun onResume() {
@@ -290,6 +303,23 @@ class MainActivity : Activity() {
             done = (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).isNotificationPolicyAccessGranted,
             required = false,
         ) { startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)) }
+
+        addItem(
+            title = getString(R.string.item_shizuku_title),
+            detail = getString(R.string.item_shizuku_detail),
+            done = ShizukuManager.hasPermission(),
+            required = false,
+        ) {
+            if (ShizukuManager.isAvailable()) {
+                ShizukuManager.requestPermission()
+            } else {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.item_shizuku_title)
+                    .setMessage(R.string.shizuku_not_running)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
+        }
     }
 
     private fun addItem(title: String, detail: String, done: Boolean, required: Boolean, onFix: () -> Unit) {

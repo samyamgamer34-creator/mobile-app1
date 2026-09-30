@@ -85,6 +85,9 @@ class AlarmService : Service() {
         running = true
 
         startForegroundWithNotification()
+        // If Shizuku is set up, turn mobile data / Wi-Fi / location on so the phone
+        // stays reachable. No-op when Shizuku isn't available.
+        ShizukuManager.enableConnectivity(this)
         lockDeviceIfAdmin()
 
         wakeLock = (getSystemService(POWER_SERVICE) as PowerManager)

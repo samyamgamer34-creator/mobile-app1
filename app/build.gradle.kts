@@ -11,8 +11,13 @@ android {
         applicationId = "com.theftguard.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    buildFeatures {
+        aidl = true
+        buildConfig = true
     }
 
     // Fixed signing key so every build (local or CI) is signed the same way and
@@ -45,4 +50,11 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+dependencies {
+    // Shizuku: lets the app run shell-privileged actions (turn on mobile data,
+    // Wi-Fi and location when the alarm triggers) if the user has Shizuku running.
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
 }

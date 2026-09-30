@@ -49,6 +49,10 @@
     <string name="accessibility_label">Theft Guard volume lock</string>
     <string name="accessibility_description">Blocks the volume buttons only while the theft alarm is sounding, so a thief cannot turn it down. It does not read or collect any content.</string>
 
+    <string name="item_shizuku_title">Auto-enable data &amp; location (Shizuku)</string>
+    <string name="item_shizuku_detail">Optional. If you run the free Shizuku app, Theft Guard can turn mobile data, Wi-Fi and location ON automatically when the alarm triggers, so the phone stays reachable. Tap to grant Shizuku access.</string>
+    <string name="shizuku_not_running">Shizuku is not running. Install the Shizuku app, start it (via wireless debugging, or root), then come back and tap this again to grant access.</string>
+
     <string name="setup_button">Start guided setup</string>
     <string name="wizard_next">Next</string>
     <string name="wizard_stop">Stop</string>

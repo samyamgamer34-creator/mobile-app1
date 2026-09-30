@@ -44,6 +44,24 @@ Open **Theft Guard** and complete the checklist:
 
 Use **Test alarm** to try it. To stop the test, unlock the phone. If device admin is off, press the power button to lock the phone, then unlock it.
 
+## Auto-enabling data & location with Shizuku (optional)
+
+Plain ADB can't let the app switch mobile data on by itself. [Shizuku](https://shizuku.rikka.app/)
+can: it runs a small service at ADB/shell privilege that apps call at runtime.
+
+With Shizuku installed and running, and access granted in Theft Guard's setup
+checklist ("Auto-enable data & location"), the alarm turns **mobile data, Wi-Fi
+and location ON** automatically the moment the "Stolen" SMS arrives, so the phone
+stays reachable.
+
+The app talks to Shizuku through a tiny service (`UserService`) that exposes only
+three fixed switches — enable mobile data, Wi-Fi, location — and takes no arbitrary
+commands, so it isn't a general remote shell.
+
+Caveat: on a non-rooted phone, Shizuku must be restarted after each reboot, so the
+auto-enable won't fire again until it's running. The SMS alarm and location-by-SMS
+don't depend on Shizuku and keep working either way.
+
 ## Fast setup over USB (for tech users)
 
 If you have USB debugging, you can grant every permission in one command instead
