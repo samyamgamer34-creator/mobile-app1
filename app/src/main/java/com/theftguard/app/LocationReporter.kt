@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
@@ -18,11 +20,11 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * While the alarm is sounding, texts the phone's GPS location to the owner's
- * trusted numbers: once immediately (last known position), again as soon as a
- * fresh fix arrives, and then every [UPDATE_INTERVAL_MS].
- *
- * Plain SMS is used so it works without mobile data.
+ * Sends the phone's location exactly ONCE per alarm: it waits briefly for a fresh
+ * GPS fix (falling back to the last known position) and then sends a single
+ * message - either by SMS to the trusted numbers, or by email if the user chose
+ * that and Shizuku has turned data/Wi-Fi on. To get another location, the owner
+ * sends "Stolen" again.
  */
 class LocationReporter(private val context: Context) {
 
@@ -30,23 +32,15 @@ class LocationReporter(private val context: Context) {
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var activeListener: LocationListener? = null
     private var running = false
-
-    private val periodicUpdate = object : Runnable {
-        override fun run() {
-            requestFreshFix()
-            handler.postDelayed(this, UPDATE_INTERVAL_MS)
-        }
-    }
+    private var sent = false
 
     fun start() {
-        if (AlarmState.trustedNumbers(context).isEmpty()) {
-            Log.w(TAG, "No trusted numbers saved; not sending location SMS")
+        if (!hasAnyRecipient()) {
+            Log.w(TAG, "No recipient configured; not sending location")
             return
         }
         running = true
-        // Send the last known position right away, then a fresh fix (the first periodic update runs now).
-        lastKnownLocation()?.let { send(it, fresh = false) }
-        handler.post(periodicUpdate)
+        requestSingleFix()
     }
 
     fun stop() {
@@ -55,10 +49,9 @@ class LocationReporter(private val context: Context) {
         stopListening()
     }
 
-    /** Tells the trusted numbers that the phone was unlocked. */
-    fun sendStopped() {
-        if (AlarmState.trustedNumbers(context).isEmpty()) return
-        sendSms(format(R.string.sms_stopped, time(System.currentTimeMillis()), batteryPercent()))
+    private fun hasAnyRecipient(): Boolean = when (AlarmState.deliveryMethod(context)) {
+        AlarmState.DELIVERY_EMAIL -> AlarmState.mailConfig(context).isComplete
+        else -> AlarmState.trustedNumbers(context).isNotEmpty()
     }
 
     // ---------------------------------------------------------------- location
@@ -88,12 +81,11 @@ class LocationReporter(private val context: Context) {
             .maxByOrNull { it.time }
     }
 
-    /** Listens on every enabled provider and sends the best fix within [FIX_TIMEOUT_MS]. */
+    /** Listens for one good fix within [FIX_TIMEOUT_MS], then sends a single message. */
     @SuppressLint("MissingPermission")
-    private fun requestFreshFix() {
-        if (!running) return
+    private fun requestSingleFix() {
         if (!hasLocationPermission() || !isLocationEnabled()) {
-            send(null, fresh = true)
+            send(location = null, fresh = false)
             return
         }
         stopListening()
@@ -130,21 +122,25 @@ class LocationReporter(private val context: Context) {
         activeListener = null
     }
 
-    // ---------------------------------------------------------------- SMS
+    // ---------------------------------------------------------------- send once
 
     private fun send(location: Location?, fresh: Boolean) {
-        if (!running) return
+        if (sent) return
+        sent = true
         val battery = batteryPercent()
-        val text = when {
+        val body = when {
             location != null -> format(
-                if (fresh) R.string.sms_location else R.string.sms_location_last_known,
+                if (fresh) R.string.msg_location else R.string.msg_location_last_known,
                 location.latitude, location.longitude,
-                location.accuracy.toInt(), time(location.time), battery
+                location.accuracy.toInt(), time(location.time), battery,
             )
-            !hasLocationPermission() -> format(R.string.sms_no_permission, battery)
-            else -> format(R.string.sms_location_off, battery)
+            !hasLocationPermission() -> format(R.string.msg_no_permission, battery)
+            else -> format(R.string.msg_location_off, battery)
         }
-        sendSms(text)
+        when (AlarmState.deliveryMethod(context)) {
+            AlarmState.DELIVERY_EMAIL -> sendEmail(body)
+            else -> sendSms(body)
+        }
     }
 
     private fun sendSms(text: String) {
@@ -165,6 +161,36 @@ class LocationReporter(private val context: Context) {
         }
     }
 
+    /** Sends the email on a background thread, waiting for the network Shizuku brought up. */
+    private fun sendEmail(body: String) {
+        val config = AlarmState.mailConfig(context)
+        if (!config.isComplete) {
+            Log.w(TAG, "Email delivery chosen but mail settings are incomplete")
+            return
+        }
+        val subject = context.getString(R.string.mail_subject)
+        Thread({
+            if (!waitForNetwork()) Log.w(TAG, "No network after waiting; trying to send anyway")
+            val ok = EmailSender.send(config, subject, body)
+            Log.i(TAG, if (ok) "Location email sent" else "Location email failed")
+        }, "theft-email").start()
+    }
+
+    /** Shizuku has just enabled data/Wi-Fi; give the connection up to ~45 s to come up. */
+    private fun waitForNetwork(): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        repeat(NETWORK_WAIT_TRIES) {
+            val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+            if (caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) return true
+            try {
+                Thread.sleep(NETWORK_WAIT_STEP_MS)
+            } catch (_: InterruptedException) {
+                return false
+            }
+        }
+        return false
+    }
+
     /** Always format with Locale.US so coordinates use '.' and ASCII digits and the map link works. */
     private fun format(resId: Int, vararg args: Any): String =
         String.format(Locale.US, context.getString(resId), *args)
@@ -177,8 +203,9 @@ class LocationReporter(private val context: Context) {
 
     companion object {
         private const val TAG = "LocationReporter"
-        private const val UPDATE_INTERVAL_MS = 5 * 60_000L
         private const val FIX_TIMEOUT_MS = 60_000L
         private const val GOOD_ACCURACY_M = 25f
+        private const val NETWORK_WAIT_TRIES = 15
+        private const val NETWORK_WAIT_STEP_MS = 3_000L
     }
 }

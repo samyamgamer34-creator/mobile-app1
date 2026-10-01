@@ -56,6 +56,92 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:text="@string/delivery_header"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/delivery_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/delivery_sms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/delivery_sms" />
+
+            <RadioButton
+                android:id="@+id/delivery_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/delivery_email" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/email_fields"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/mail_help"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/mail_host"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/mail_host_hint"
+                android:importantForAutofill="no"
+                android:inputType="textUri" />
+
+            <EditText
+                android:id="@+id/mail_port"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/mail_port_hint"
+                android:importantForAutofill="no"
+                android:inputType="number" />
+
+            <EditText
+                android:id="@+id/mail_user"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/mail_user_hint"
+                android:importantForAutofill="no"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/mail_pass"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/mail_pass_hint"
+                android:importantForAutofill="no"
+                android:inputType="textPassword" />
+
+            <EditText
+                android:id="@+id/mail_to"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/mail_to_hint"
+                android:importantForAutofill="no"
+                android:inputType="textEmailAddress" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/delivery_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/delivery_save" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="@string/setup_header"
             android:textSize="18sp"
             android:textStyle="bold" />

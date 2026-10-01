@@ -108,7 +108,6 @@ class AlarmService : Service() {
     private fun stopAlarm() {
         Log.i(TAG, "Phone unlocked, stopping theft alarm")
         AlarmState.setActive(this, false)
-        locationReporter?.sendStopped()
         sendBroadcast(Intent(ACTION_ALARM_STOPPED).setPackage(packageName))
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

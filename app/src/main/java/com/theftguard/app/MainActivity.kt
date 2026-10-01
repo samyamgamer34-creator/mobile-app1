@@ -16,10 +16,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.View
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -30,6 +32,8 @@ class MainActivity : Activity() {
     private lateinit var armedSwitch: Switch
     private lateinit var checklist: LinearLayout
     private lateinit var trustedNumbers: EditText
+    private lateinit var deliveryGroup: RadioGroup
+    private lateinit var emailFields: LinearLayout
 
     /** True while the guided setup is walking the user through the required steps. */
     private var wizardActive = false
@@ -57,6 +61,8 @@ class MainActivity : Activity() {
             renderChecklist()
         }
 
+        setUpDeliverySection()
+
         findViewById<Button>(R.id.setup_button).setOnClickListener { startGuidedSetup() }
         findViewById<Button>(R.id.test_button).setOnClickListener { confirmTest() }
 
@@ -67,7 +73,61 @@ class MainActivity : Activity() {
     }
 
     private val shizukuListener =
-        rikka.shizuku.Shizuku.OnRequestPermissionResultListener { _, _ -> renderChecklist() }
+        rikka.shizuku.Shizuku.OnRequestPermissionResultListener { _, _ ->
+            renderChecklist()
+            refreshDeliverySection()
+        }
+
+    // ------------------------------------------------------------- delivery (SMS / email)
+
+    private fun setUpDeliverySection() {
+        deliveryGroup = findViewById(R.id.delivery_group)
+        emailFields = findViewById(R.id.email_fields)
+
+        val email = AlarmState.deliveryMethod(this) == AlarmState.DELIVERY_EMAIL
+        deliveryGroup.check(if (email) R.id.delivery_email else R.id.delivery_sms)
+
+        val cfg = AlarmState.mailConfig(this)
+        findViewById<EditText>(R.id.mail_host).setText(cfg.host.ifEmpty { "smtp.gmail.com" })
+        findViewById<EditText>(R.id.mail_port).setText(cfg.port.toString())
+        findViewById<EditText>(R.id.mail_user).setText(cfg.user)
+        findViewById<EditText>(R.id.mail_pass).setText(cfg.password)
+        findViewById<EditText>(R.id.mail_to).setText(cfg.recipient)
+
+        deliveryGroup.setOnCheckedChangeListener { _, checkedId ->
+            // Email needs Shizuku (for data/Wi-Fi); block the choice until it's granted.
+            if (checkedId == R.id.delivery_email && !ShizukuManager.hasPermission()) {
+                Toast.makeText(this, R.string.delivery_email_disabled, Toast.LENGTH_LONG).show()
+                deliveryGroup.check(R.id.delivery_sms)
+            }
+            refreshDeliverySection()
+        }
+
+        findViewById<Button>(R.id.delivery_save).setOnClickListener { saveDelivery() }
+        refreshDeliverySection()
+    }
+
+    private fun refreshDeliverySection() {
+        if (!::deliveryGroup.isInitialized) return
+        emailFields.visibility =
+            if (deliveryGroup.checkedRadioButtonId == R.id.delivery_email) View.VISIBLE else View.GONE
+    }
+
+    private fun saveDelivery() {
+        val email = deliveryGroup.checkedRadioButtonId == R.id.delivery_email
+        if (email) {
+            AlarmState.setMailConfig(
+                this,
+                host = findViewById<EditText>(R.id.mail_host).text.toString(),
+                port = findViewById<EditText>(R.id.mail_port).text.toString(),
+                user = findViewById<EditText>(R.id.mail_user).text.toString(),
+                password = findViewById<EditText>(R.id.mail_pass).text.toString(),
+                recipient = findViewById<EditText>(R.id.mail_to).text.toString(),
+            )
+        }
+        AlarmState.setDeliveryMethod(this, if (email) AlarmState.DELIVERY_EMAIL else AlarmState.DELIVERY_SMS)
+        Toast.makeText(this, R.string.delivery_saved, Toast.LENGTH_SHORT).show()
+    }
 
     override fun onDestroy() {
         runCatching { rikka.shizuku.Shizuku.removeRequestPermissionResultListener(shizukuListener) }

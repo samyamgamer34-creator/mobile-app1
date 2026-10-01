@@ -57,4 +57,8 @@ dependencies {
     // Wi-Fi and location when the alarm triggers) if the user has Shizuku running.
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
+
+    // Send the location by email over SMTP (used when the user picks email delivery).
+    implementation("com.sun.mail:android-mail:1.6.7")
+    implementation("com.sun.mail:android-activation:1.6.7")
 }
