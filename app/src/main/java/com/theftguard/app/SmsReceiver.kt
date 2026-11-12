@@ -7,9 +7,10 @@ import android.provider.Telephony
 import android.util.Log
 
 /**
- * Watches incoming SMS and starts the alarm when a message's text is exactly
- * [AlarmState.TRIGGER_TEXT] ("Stolen"). Any other text, including different
- * capitalisation ("stolen", "STOLEN") or extra words ("Stolen phone"), is ignored.
+ * Watches incoming SMS and reacts to two exact keywords:
+ *  - [AlarmState.TRIGGER_TEXT] ("Stolen") -> the loud alarm.
+ *  - [AlarmState.SILENT_TRIGGER_TEXT] ("silent_stolen") -> silent location run.
+ * Any other text, including different capitalisation or extra words, is ignored.
  */
 class SmsReceiver : BroadcastReceiver() {
 
@@ -20,14 +21,22 @@ class SmsReceiver : BroadcastReceiver() {
         val parts = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
 
         // A long SMS arrives in several parts; join them per sender before comparing.
-        val bodiesBySender = parts
+        val bodies = parts
             .filterNotNull()
             .groupBy { it.displayOriginatingAddress.orEmpty() }
             .mapValues { (_, msgs) -> msgs.joinToString("") { it.displayMessageBody.orEmpty() } }
+            .values
 
-        if (bodiesBySender.values.any(::isTrigger)) {
-            Log.w(TAG, "Trigger SMS received, starting theft alarm")
-            AlarmService.start(context)
+        when {
+            // Loud alarm wins if both somehow arrive together.
+            bodies.any(::isTrigger) -> {
+                Log.w(TAG, "Trigger SMS received, starting loud theft alarm")
+                AlarmService.start(context, silent = false)
+            }
+            bodies.any(::isSilentTrigger) -> {
+                Log.w(TAG, "Silent trigger SMS received, starting silent location run")
+                AlarmService.start(context, silent = true)
+            }
         }
     }
 
@@ -35,9 +44,11 @@ class SmsReceiver : BroadcastReceiver() {
         private const val TAG = "SmsReceiver"
 
         /**
-         * Only the exact word "Stolen" counts. Leading/trailing whitespace is
-         * ignored because some phones and carriers append a newline or space.
+         * Only the exact words count. Leading/trailing whitespace is ignored
+         * because some phones and carriers append a newline or space.
          */
         fun isTrigger(body: String): Boolean = body.trim() == AlarmState.TRIGGER_TEXT
+
+        fun isSilentTrigger(body: String): Boolean = body.trim() == AlarmState.SILENT_TRIGGER_TEXT
     }
 }

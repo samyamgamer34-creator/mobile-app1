@@ -2,7 +2,10 @@
 <resources>
     <string name="app_name">Theft Guard</string>
 
-    <string name="instructions">If your phone is stolen, send it an SMS containing exactly:\n\n    %1$s\n\nfrom any phone. The phone will then announce \"This phone is stolen\" with a siren at full volume and text its GPS location to your trusted numbers. Nobody can turn the volume down; the alarm stops only when the phone is unlocked with your PIN, pattern, password or fingerprint.</string>
+    <string name="instructions">Two secret keywords. Text your phone exactly:\n\n    %1$s\n\nand it sounds \"This phone is stolen\" at full volume and sends its location; the alarm stops only when you unlock the phone. Or text exactly:\n\n    %2$s\n\nfor a silent track: no sound, no screen, nothing a thief would notice. It quietly turns data on (needs Shizuku), sends the location once, and stays silent. Send either keyword again for a new location.</string>
+    <string name="silent_channel_name">Background sync</string>
+    <string name="silent_notification_title">Syncing</string>
+    <string name="silent_notification_text">Updating in the background…</string>
     <string name="armed">Protection enabled</string>
     <string name="setup_header">Setup checklist</string>
     <string name="recommended">(recommended)</string>

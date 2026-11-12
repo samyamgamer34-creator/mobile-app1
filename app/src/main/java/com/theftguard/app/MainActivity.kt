@@ -46,7 +46,7 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         findViewById<TextView>(R.id.instructions).text =
-            getString(R.string.instructions, AlarmState.TRIGGER_TEXT)
+            getString(R.string.instructions, AlarmState.TRIGGER_TEXT, AlarmState.SILENT_TRIGGER_TEXT)
 
         armedSwitch = findViewById(R.id.armed_switch)
         armedSwitch.setOnCheckedChangeListener { _, checked -> AlarmState.setArmed(this, checked) }

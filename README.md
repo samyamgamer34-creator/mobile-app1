@@ -17,7 +17,8 @@ with the owner's PIN, pattern, password or fingerprint.
 
 | Requirement | Implementation |
 |---|---|
-| Trigger only on the exact text "Stolen" | `SmsReceiver` joins multi-part messages and checks `body.trim() == "Stolen"`. It is case-sensitive, so `stolen`, `STOLEN` and `Stolen phone` are ignored. Only surrounding whitespace is trimmed, because some carriers add it. |
+| Two trigger keywords | `SmsReceiver` joins multi-part messages and matches `body.trim()` exactly (case-sensitive, so `stolen` or `Stolen phone` are ignored). `Stolen` starts the loud alarm; `silent_stolen` starts the **silent run**. |
+| Silent "secret mission" (`silent_stolen`) | No siren, no "stolen" screen, no screen lock, no volume takeover. `AlarmService` runs a quiet foreground service (shown as a bland "Syncing" notification so a thief sees nothing odd), turns data/Wi-Fi/location on via Shizuku, switches the phone to total silence, sends the location **once**, then stops. Not persisted across reboots. Send the keyword again for a new location. |
 | Say "this phone is stolen" | `AlarmService` alternates text-to-speech ("Warning! This phone is stolen!") with a generated siren. Both play on the **alarm** audio stream, so silent or vibrate mode doesn't mute them. |
 | Full volume that can't be lowered | The alarm and media streams are forced to maximum and unmuted. A `ContentObserver` on the volume settings and a 200 ms poll put the volume straight back if anything lowers it. The alarm screen consumes the volume keys. The optional **accessibility service** (`VolumeLockService`) blocks the volume buttons system-wide, including on the lock screen. |
 | Stops only when unlocked | The alarm listens for `ACTION_USER_PRESENT`, which Android sends when the lock screen is dismissed. The alarm screen has no stop button. The back button is ignored. |

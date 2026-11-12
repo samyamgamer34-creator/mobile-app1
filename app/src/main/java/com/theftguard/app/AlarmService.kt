@@ -45,6 +45,9 @@ class AlarmService : Service() {
 
     @Volatile
     private var running = false
+
+    /** True when this run is the silent "secret mission" (no sound, no screen, no lock). */
+    private var silent = false
     private var soundThread: Thread? = null
     private var tts: TextToSpeech? = null
     private var locationReporter: LocationReporter? = null
@@ -65,6 +68,12 @@ class AlarmService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Silent "secret mission": send location quietly once, then stop. Not persisted
+        // across reboots and never sounds or locks, so a thief sees nothing unusual.
+        if (intent?.getBooleanExtra(EXTRA_SILENT, false) == true) {
+            if (!running) startSilent()
+            return START_NOT_STICKY
+        }
         // Restarted by the system after being killed: only continue if the alarm is still owed.
         if (!AlarmState.isActive(this)) {
             stopSelf()
@@ -102,6 +111,44 @@ class AlarmService : Service() {
         locationReporter = LocationReporter(this).apply { start() }
 
         soundThread = Thread(::soundLoop, "theft-alarm-sound").apply { start() }
+    }
+
+    /**
+     * Silent mode: no sound, no alarm screen, no lock. Turn connectivity on via
+     * Shizuku, silence the phone so nothing chirps, send the location once, then stop.
+     */
+    private fun startSilent() {
+        running = true
+        silent = true
+
+        startSilentForeground()
+        ShizukuManager.enableConnectivity(this)
+        silenceEverything()
+
+        wakeLock = (getSystemService(POWER_SERVICE) as PowerManager)
+            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TheftGuard:silent")
+            .apply { acquire(SILENT_MAX_MS) }
+
+        locationReporter = LocationReporter(this) { mainHandler.post { finishSilent() } }.apply { start() }
+
+        // Safety net in case the location never resolves (e.g. no signal).
+        mainHandler.postDelayed({ finishSilent() }, SILENT_MAX_MS)
+    }
+
+    private fun finishSilent() {
+        if (!silent) return
+        Log.i(TAG, "Silent location run finished")
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
+    /** Switches the phone to total silence so no incoming alert tips off a thief. */
+    private fun silenceEverything() {
+        runCatching { audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT }
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        if (nm.isNotificationPolicyAccessGranted) {
+            runCatching { nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE) }
+        }
     }
 
     /** Called when the phone has been unlocked. */
@@ -165,6 +212,35 @@ class AlarmService : Service() {
             .setOngoing(true)
             .setContentIntent(fullScreen)
             .setFullScreenIntent(fullScreen, true)
+            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    /**
+     * A deliberately boring, low-priority notification for silent mode. Android
+     * requires a foreground service to show something; this makes it look like a
+     * routine background sync so a thief doesn't get suspicious. It plays no sound.
+     */
+    private fun startSilentForeground() {
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        nm.createNotificationChannel(
+            NotificationChannel(SILENT_CHANNEL_ID, getString(R.string.silent_channel_name), NotificationManager.IMPORTANCE_MIN).apply {
+                setShowBadge(false)
+                setSound(null, null)
+            }
+        )
+        val notification = Notification.Builder(this, SILENT_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle(getString(R.string.silent_notification_title))
+            .setContentText(getString(R.string.silent_notification_text))
+            .setCategory(Notification.CATEGORY_SERVICE)
+            .setVisibility(Notification.VISIBILITY_SECRET)
+            .setOngoing(true)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -366,16 +442,24 @@ class AlarmService : Service() {
     companion object {
         private const val TAG = "AlarmService"
         private const val CHANNEL_ID = "theft_alarm"
+        private const val SILENT_CHANNEL_ID = "theft_silent"
         private const val NOTIFICATION_ID = 1
         private const val SAMPLE_RATE = 44_100
         private const val VOLUME_POLL_MS = 200L
 
+        /** How long the silent run may stay up waiting for a fix / email before giving up. */
+        private const val SILENT_MAX_MS = 150_000L
+
+        private const val EXTRA_SILENT = "com.theftguard.app.EXTRA_SILENT"
+
         /** Sent (package-local) when the alarm stops so the alarm screen can close. */
         const val ACTION_ALARM_STOPPED = "com.theftguard.app.ALARM_STOPPED"
 
-        fun start(context: Context) {
-            AlarmState.setActive(context, true)
-            context.startForegroundService(Intent(context, AlarmService::class.java))
+        /** Loud alarm (default) or the silent "secret mission" location run. */
+        fun start(context: Context, silent: Boolean = false) {
+            if (!silent) AlarmState.setActive(context, true)
+            val intent = Intent(context, AlarmService::class.java).putExtra(EXTRA_SILENT, silent)
+            context.startForegroundService(intent)
         }
 
         /** Used when we know the owner already unlocked the phone (e.g. after reboot). */

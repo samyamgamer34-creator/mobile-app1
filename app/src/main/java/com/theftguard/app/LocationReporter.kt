@@ -26,7 +26,10 @@ import java.util.Locale
  * that and Shizuku has turned data/Wi-Fi on. To get another location, the owner
  * sends "Stolen" again.
  */
-class LocationReporter(private val context: Context) {
+class LocationReporter(
+    private val context: Context,
+    private val onFinished: (() -> Unit)? = null,
+) {
 
     private val handler = Handler(Looper.getMainLooper())
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -37,6 +40,7 @@ class LocationReporter(private val context: Context) {
     fun start() {
         if (!hasAnyRecipient()) {
             Log.w(TAG, "No recipient configured; not sending location")
+            finish()
             return
         }
         running = true
@@ -47,6 +51,15 @@ class LocationReporter(private val context: Context) {
         running = false
         handler.removeCallbacksAndMessages(null)
         stopListening()
+    }
+
+    private var finished = false
+
+    /** Signals the caller (silent mode uses this to stop the service) exactly once. */
+    private fun finish() {
+        if (finished) return
+        finished = true
+        onFinished?.invoke()
     }
 
     private fun hasAnyRecipient(): Boolean = when (AlarmState.deliveryMethod(context)) {
@@ -139,7 +152,10 @@ class LocationReporter(private val context: Context) {
         }
         when (AlarmState.deliveryMethod(context)) {
             AlarmState.DELIVERY_EMAIL -> sendEmail(body)
-            else -> sendSms(body)
+            else -> {
+                sendSms(body)
+                finish()
+            }
         }
     }
 
@@ -166,6 +182,7 @@ class LocationReporter(private val context: Context) {
         val config = AlarmState.mailConfig(context)
         if (!config.isComplete) {
             Log.w(TAG, "Email delivery chosen but mail settings are incomplete")
+            finish()
             return
         }
         val subject = context.getString(R.string.mail_subject)
@@ -173,6 +190,7 @@ class LocationReporter(private val context: Context) {
             if (!waitForNetwork()) Log.w(TAG, "No network after waiting; trying to send anyway")
             val ok = EmailSender.send(config, subject, body)
             Log.i(TAG, if (ok) "Location email sent" else "Location email failed")
+            handler.post { finish() }
         }, "theft-email").start()
     }
 

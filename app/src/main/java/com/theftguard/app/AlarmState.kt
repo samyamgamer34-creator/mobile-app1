@@ -14,6 +14,9 @@ object AlarmState {
     /** The exact SMS text that triggers the alarm. */
     const val TRIGGER_TEXT = "Stolen"
 
+    /** The exact SMS text that triggers the silent (no sound, no screen) location run. */
+    const val SILENT_TRIGGER_TEXT = "silent_stolen"
+
     private const val PREFS = "theft_guard"
     private const val KEY_ARMED = "armed"
     private const val KEY_ACTIVE = "alarm_active"
